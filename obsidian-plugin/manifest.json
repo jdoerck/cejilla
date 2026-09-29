@@ -1,0 +1,10 @@
+{
+  "id": "inlay-chords",
+  "name": "Inlay Chords",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "Renders ChordPro-style inline bracket chords ([C]lyric) and frontmatter song metadata as a playable chord-over-lyric chart, with guitar/ukulele diagrams.",
+  "author": "J Doerck",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}

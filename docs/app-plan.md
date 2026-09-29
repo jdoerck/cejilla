@@ -1,11 +1,74 @@
 # Inlay — macOS / iOS app plan
 
-Status: draft, 2026-09-22
-Scope: native app that reads the existing `.md` song format and presents it as a playable chart on Mac, iPhone and iPad.
+Status: draft, 2026-09-22 (updated: Obsidian plugin track added)
+Scope: two tracks reading the existing `.md` song format and presenting it as a playable chart.
+
+- **Track 1 - Obsidian plugin.** Desktop + iOS + Android, inside the vault. Section 0.
+- **Track 2 - Native app.** Mac + iPhone + iPad, dedicated stage surface. Sections 1-11.
+
+**Sequencing: build the plugin first.** Days not weeks, reuses the parser almost untouched, validates the format and chord DB with real users on real iOS devices before an 8-week native bet. The native app's differentiator - a dedicated performance surface outside Obsidian's general UI - only matters once the plugin proves people want that escape hatch.
 
 ---
 
-## 1. Premise
+## 0. Obsidian plugin (Track 1)
+
+### 0.1 Feasibility
+
+Already proven by existing plugins - [Chord Sheets](https://community.obsidian.md/plugins/chord-sheets), [ChordPro Viewer](https://community.obsidian.md/plugins/chopro-viewer), [Markdown Chords](https://community.obsidian.md/plugins/markdown-chords) all render chord-over-lyric + diagrams in preview mode today. Difference from those: this plugin renders the *inline-bracket-in-plain-paragraph* format the CLI already parses, not a fenced ` ```chords ` code block. Closer in spirit to ChordPro Viewer (frontmatter-driven) than to Chord Sheets (fenced-block-driven).
+
+### 0.2 Runs on iOS - with a constraint
+
+Obsidian mobile installs community plugins from the same registry as desktop, same vault sync. The plugin API (`registerMarkdownPostProcessor`) is pure DOM manipulation and works identically on mobile.
+
+**The catch: no Node/Electron APIs on mobile.** Obsidian mobile runs in a sandboxed webview, not Electron. No `fs`, no `child_process`, no `path`/`url`/`fileURLToPath`. Current parser and renderer assume Node stdlib throughout.
+
+Porting work, concretely:
+- `readFileSync` calls -> `this.app.vault.read(file)` (async, `Promise`-based - parser/renderer need to go async or take a pre-read string, which [parser.js](../src/parser.js) already does at its top level, good sign)
+- The CSS-loading trick in [html.js](../src/renderers/html.js) (`__dirname` + `readFileSync(join(__dirname, 'song.css'))`, added this session) doesn't exist on mobile at all - inline the CSS as a bundled JS string constant instead, via esbuild (the standard Obsidian plugin build tool)
+- Everything else - `parseFrontmatter`, `parseLyricsLine`, chord DB lookup, SVG string building - is plain JS with no I/O, ports untouched
+
+**Footgun to avoid:** `manifest.json` has `isDesktopOnly`. Left `true` (a common scaffold default), the plugin never shows up in mobile's plugin browser. Must be `false`.
+
+### 0.3 Architecture
+
+Single TypeScript plugin, esbuild-bundled per the standard Obsidian plugin template.
+
+| Module | Source | Change from CLI |
+|---|---|---|
+| `ChordProParser` | [src/parser.js](../src/parser.js) | copy near-verbatim, already synchronous-on-a-string |
+| `ChordDB` | [src/chords/guitar.js](../src/chords/guitar.js), [src/chords/ukulele.js](../src/chords/ukulele.js) | copy verbatim |
+| `render()` | [src/renderers/html.js](../src/renderers/html.js) | replace `readFileSync(song.css)` with a bundled string constant; output DOM nodes or an HTML fragment instead of a full `<html>` document |
+| `main.ts` | new | `registerMarkdownPostProcessor` - detect a song note (frontmatter has `instrument:` or `key:`), replace the rendered body with the chord/lyric layout |
+| settings | new | default instrument, diagram on/off, matches CLI's `--instrument` / `--no-diagrams` |
+
+Full-document takeover (not a fenced block) means the post-processor needs to recognize "this whole note is a song" from frontmatter and replace Obsidian's normal paragraph rendering for the body, not just intercept one code fence. That's the one piece with no direct precedent in the existing renderer code - closest analog is ChordPro Viewer's approach, worth reading its source before writing this part.
+
+### 0.4 Feature order
+
+1. Detect song notes via frontmatter, render read-only chord-over-lyric in preview mode (no diagrams yet)
+2. Chord diagrams (guitar + ukulele), ported SVG geometry
+3. Settings pane - instrument choice, diagram toggle
+4. Transpose command (in-memory only, doesn't touch the file)
+5. Live source view still shows raw markdown untouched - editing stays plain-text, only preview mode is enhanced
+6. Publish to the community plugin directory
+
+### 0.5 Schedule
+
+| Days | Work |
+|---|---|
+| 1 | Scaffold from the official Obsidian sample plugin, esbuild pipeline, confirm `isDesktopOnly: false` loads on an actual iOS device |
+| 2 | Port parser + chord DB, verify against [examples/Beware_of_Darkness.md](../examples/Beware_of_Darkness.md) and [examples/wonderwall.md](../examples/wonderwall.md) |
+| 3 | Post-processor + full-note takeover, diagrams rendering in preview mode |
+| 4 | Settings pane, transpose command, dark-mode theming (inherit Obsidian's CSS variables rather than the CLI's fixed `#333`/`#fafafa` palette) |
+| 5 | Test on real vault, real iOS device, submit to community plugin directory |
+
+### 0.6 What it doesn't do
+
+No dedicated stage mode, no autoscroll-while-hands-are-busy, no external display, no keep-awake, no setlist ordering UI - all live inside Obsidian's general-purpose shell. That gap is what Track 2 (sections 1-11 below) exists to fill, if the plugin shows people want it.
+
+---
+
+## 1. Premise (Track 2 - native app)
 
 The CLI already parses the format and renders it ([src/parser.js](../src/parser.js), [src/renderers/html.js](../src/renderers/html.js)). The app is the same parse plus a screen you can read from six feet away while holding an instrument.
 
@@ -149,8 +212,8 @@ Setlists and tags do different jobs. A setlist is ordered and manual (a `.md` fi
 
 ## 9. Known gotchas
 
-- **Inline flow arrays break the frontmatter parser.** [parseFrontmatter](../src/parser.js#L17) handles block arrays but parses `tags: [gig, learning]` as the literal string `"[gig, learning]"`. Obsidian writes the inline form constantly. Fix in the JS parser before the Swift port or the bug gets inherited.
-- **External CSS.** The HTML renderer links `song.css` alongside the file, but [CLAUDE.md](../CLAUDE.md) specifies self-contained output. Fix before the webview spike or the spike renders unstyled.
+- ~~**Inline flow arrays break the frontmatter parser.**~~ Fixed - [parseFrontmatter](../src/parser.js#L17) now handles `tags: [gig, learning, "uke/beginner"]` same as the block form.
+- ~~**External CSS.**~~ Fixed - [html.js](../src/renderers/html.js) now inlines `song.css` into a `<style>` block at render time, no `<link>`, self-contained per [CLAUDE.md](../CLAUDE.md). Note for Track 1 (0.3): this fix uses `readFileSync`/`__dirname`, which doesn't exist on Obsidian mobile - the plugin needs its own bundled-string version of the same idea.
 - **Duplicate section headings.** `Verse 2` appears twice in [examples/Beware_of_Darkness.md](../examples/Beware_of_Darkness.md). Section keys cannot be unique-by-name.
 - **iCloud Drive.** Obsidian mobile keeps vaults in iCloud. Without file coordination the app reads stale or partially-downloaded files. Handle the not-yet-downloaded case explicitly.
 - **Licensing.** Chord shapes and instrument data are fine. Bundled lyrics are not. User-supplied files only.
@@ -158,6 +221,8 @@ Setlists and tags do different jobs. A setlist is ordered and manual (a `.md` fi
 ---
 
 ## 10. Rough schedule
+
+Track 2 schedule below assumes Track 1 (section 0, ~5 days) ships first. If the plugin validates demand, this schedule starts; if it doesn't, it's shelved and the plugin is the whole product.
 
 | Week | Work |
 |---|---|
@@ -172,6 +237,8 @@ Setlists and tags do different jobs. A setlist is ordered and manual (a `.md` fi
 
 ## 11. Open questions
 
+- What does "the plugin validated demand" actually mean - install count, a specific feature request pattern, something else? Needs a threshold before Track 2 starts, not a vibe.
 - Does the phone form factor earn its build cost, or is this iPad + Mac only for v1?
 - Piano and bass diagrams, or stay with guitar and ukulele?
 - Does the app ever write a song file, or is tag write-back the only mutation forever?
+- If both tracks ship, do they share anything beyond the parser concept - e.g. does the native app's tag write-back format need to match whatever the plugin's transpose command does, so files stay portable between them?

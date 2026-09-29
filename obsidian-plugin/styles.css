@@ -1,0 +1,186 @@
+/*
+Ported from ../src/renderers/song.css, adapted to inherit Obsidian's theme
+variables instead of fixed light-mode colors, so dark mode / community
+themes work without a separate stylesheet. Obsidian loads this file
+automatically for enabled plugins — no build step, no JS-string-inlining
+needed (unlike the standalone HTML renderer, which has to inline its CSS
+by hand because it ships outside any host app).
+
+Scoped under .inlay-song so it can't leak into the rest of the vault's UI.
+*/
+
+.inlay-song {
+  font-family: var(--font-text, Georgia, serif);
+  color: var(--text-normal);
+}
+
+/* ── Meta header ── */
+
+.inlay-song .song-meta {
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--background-modifier-border);
+  padding-bottom: 1rem;
+}
+
+.inlay-song .song-title {
+  font-size: 1.6rem;
+  font-weight: bold;
+}
+
+.inlay-song .song-artist {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.inlay-song .song-directives {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+  padding: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* ── Chord diagrams ── */
+
+.inlay-song .chord-diagrams {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.inlay-song .chord-diagram {
+  text-align: center;
+}
+
+.inlay-song .chord-name {
+  font-family: var(--font-monospace);
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.inlay-song .chord-diagram svg line,
+.inlay-song .chord-diagram svg rect,
+.inlay-song .chord-diagram svg circle {
+  stroke: var(--text-normal);
+}
+
+.inlay-song .chord-diagram svg circle[fill="#333"],
+.inlay-song .chord-diagram svg rect[fill="#333"] {
+  fill: var(--text-normal);
+}
+
+.inlay-song .chord-diagram svg text {
+  fill: var(--text-muted);
+}
+
+.inlay-song .chord-unknown {
+  font-size: 1.6rem;
+  color: var(--text-faint);
+}
+
+/* ── Song body ── */
+/* Single column by default — Obsidian panes are rarely print-wide.
+   Widen to 2 columns only when the pane genuinely has the room. */
+
+.inlay-song .song-body {
+  columns: 1;
+}
+
+@container (min-width: 700px) {
+  .inlay-song .song-body {
+    columns: 2;
+    column-gap: 2rem;
+  }
+}
+
+.inlay-song .song-section {
+  margin-bottom: 1.1rem;
+  break-inside: avoid;
+}
+
+.inlay-song .section-label {
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  border-left: 3px solid var(--background-modifier-border);
+  padding-left: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+/* ── Chord/lyric lines ── */
+
+.inlay-song .song-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin-bottom: 0.1rem;
+  font-size: 0.9rem;
+}
+
+.inlay-song .segment {
+  display: inline-flex;
+  flex-direction: column;
+  padding-right: 0.4em;
+}
+
+.inlay-song .chord {
+  font-family: var(--font-monospace);
+  font-weight: bold;
+  color: var(--text-accent, #c0392b);
+  font-size: 0.75rem;
+  min-height: 1.1em;
+  white-space: pre;
+}
+
+.inlay-song .chord--empty {
+  min-height: 1.1em;
+}
+
+.inlay-song .lyric {
+  font-size: 0.9rem;
+  white-space: pre;
+}
+
+.inlay-song .song-comment {
+  font-style: italic;
+  color: var(--text-faint);
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+}
+
+.inlay-song .song-blank {
+  height: 0.5rem;
+}
+
+/* ── Blockquotes (chorus text, highlighted passages) ── */
+
+.inlay-song .song-blockquote {
+  margin: 0.25rem 0;
+  padding: 0.4rem 0.75rem;
+  border-left: 3px solid var(--text-accent, #c0392b);
+  background: var(--background-secondary);
+  border-radius: 0 4px 4px 0;
+}
+
+/* ── Section reference (↻ Chorus) ── */
+
+.inlay-song .section-ref {
+  display: inline-block;
+  margin: 0.35rem 0;
+  padding: 0.15rem 0.6rem;
+  font-family: var(--font-monospace);
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: var(--text-accent, #c0392b);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 3px;
+  background: var(--background-secondary);
+}

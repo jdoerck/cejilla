@@ -1,0 +1,27 @@
+{
+  "name": "inlay-chords",
+  "version": "0.1.0",
+  "description": "Obsidian plugin: renders inline-bracket ChordPro song notes as chord-over-lyric charts with diagrams.",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+  },
+  "keywords": [
+    "obsidian-plugin",
+    "chordpro",
+    "chords",
+    "songbook"
+  ],
+  "author": "J Doerck",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "^0.19.0",
+    "obsidian": "latest",
+    "tslib": "2.4.0",
+    "typescript": "^5.0.0"
+  }
+}
