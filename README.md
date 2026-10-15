@@ -77,6 +77,19 @@ time: 4/4
 | `capo`     | Capo fret number             |
 | `tempo`    | BPM                          |
 | `time`     | Time signature (e.g. `4/4`)  |
+| `source`   | Where the chart came from: one web address, or a list of them |
+
+`source` takes one address or several. Web addresses show in the header as links named after the site; anything else (for example `"[[original.pdf]]"`) shows as plain text:
+
+```yaml
+source: https://tabs.ultimate-guitar.com/tab/iggy-pop/the-passenger-chords-80079
+```
+
+```yaml
+source:
+  - https://tabs.ultimate-guitar.com/tab/iggy-pop/the-passenger-chords-80079
+  - https://example.com/another-arrangement
+```
 
 ### Sections
 
@@ -95,6 +108,20 @@ Use `##` headings to define sections. The type is inferred from the label:
 
 ## Outro
 ```
+
+**Highlighted parts.** `## Chorus` gets a tinted box. `## Pre-Chorus`, `## Post-Chorus`, `## Bridge`, `## Intro`, `## Interlude` and `## Outro` get a left bar without the tint. Verses stay plain.
+
+**Where a highlighted part ends.** It covers only the stanza directly under its heading: the first blank line ends it. A block after that blank line with no heading of its own is a plain part, so a verse can simply follow a chorus without being announced:
+
+```md
+## Chorus
+[G]Chorus line
+[C]Chorus line
+
+[G]This verse is not highlighted
+```
+
+A `{column_break}` also ends the current section. Verses keep all their stanzas under one heading. If a chorus or bridge really has two stanzas, repeat the heading above the second one.
 
 ### Chords
 
@@ -117,7 +144,9 @@ Prefix lines with `> ` to mark them as a chorus or highlighted passage. They ren
 > [A]Make you [F#m]sore and what is [Bm]more
 ```
 
-To reference a section later without repeating the lyrics, use a single blockquote line whose text matches the section heading exactly:
+#### Repeat reminders
+
+A visual cue to reuse something from earlier in the tab, instead of writing it out again. Use a single `>` line with no chords:
 
 ```md
 ## Verse 2
@@ -125,9 +154,43 @@ To reference a section later without repeating the lyrics, use a single blockquo
 Some lyrics here...
 
 > Chorus
+
+> Instrumental verse
+
+> Repeat 1st Verse
 ```
 
-This renders as a `↻ Chorus` repeat marker.
+Each renders as a small `↻` marker (`↻ Chorus`, `↻ Instrumental verse`, `↻ 1st Verse`). The text doesn't have to match a heading, and a leading "Repeat" is dropped because the marker already says it.
+
+- Separate consecutive reminders with a blank line. Two `>` lines in a row are one blockquote, not two markers.
+- A `>` line with chords in it, or several `>` lines together, is a normal highlighted box.
+- If the part has its own new content, make it a heading (`### Breakdown`), not a `>` line.
+
+### Tablature
+
+Wrap ASCII tab (or anything else that must keep its exact spacing) in a fenced block. It renders in monospace so the columns line up, and is never parsed for chords or headings:
+
+````md
+```
+0-------0--0---2-2-----0-------
+2-0-2-3-0----3-2---5-4-2-3-2-0-
+2-------1-1----2-------1-------
+2-------2------4-------2-------
+```
+````
+
+One fence per staff. A fenced block that contains chord brackets or `{directive}` lines is treated as ordinary song content instead.
+
+### Chords written above the lyrics
+
+If a song was typed with the chord names on their own line above the lyrics, convert it to inline brackets with the bundled tool instead of by hand:
+
+```bash
+node src/chords-above.js song.md            # report only
+node src/chords-above.js song.md --write    # rewrite the file
+```
+
+Each chord goes into the lyric at the column it sat over, moved to the nearest word start when it lands inside a word (`--snap N` sets how far, `--snap 0` uses exact columns), label lines such as `Chorus` or `[Verse 2]` become `###` headings, and the tool checks that no lyric text changed before it writes. Lines it cannot convert safely (chords mixed with `|` or `(x2)`) are reported by line number and left alone, and so are chord rows that run far past the end of their lyric, which are the ones worth checking by eye. See `.claude/skills/convert-chords-above/SKILL.md` for the full workflow.
 
 ### Custom Chord Definitions
 

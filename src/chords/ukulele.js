@@ -24,7 +24,7 @@ export const ukuleleChords = new Map([
   ['Dsus2',[{ frets: [2,2,0,0], fingers:[2,3,0,0], barre:null, baseFret:1 }]],
   ['Dsus4',[{ frets: [0,2,3,0], fingers:[0,1,3,0], barre:null, baseFret:1 }]],
   ['Ddim', [{ frets: [1,2,1,2], fingers:[1,3,2,4], barre:null, baseFret:1 }]],
-  ['Daug', [{ frets: [2,1,2,0], fingers:[2,1,3,0], barre:null, baseFret:1 }]],
+  ['Daug', [{ frets: [3,2,2,1], fingers:[3,2,2,1], barre:null, baseFret:1 }]],
 
   ['D#',   [{ frets: [3,3,3,1], fingers:[2,3,4,1], barre:null, baseFret:1 }]],
   ['D#m',  [{ frets: [3,3,2,1], fingers:[3,4,2,1], barre:null, baseFret:1 }]],

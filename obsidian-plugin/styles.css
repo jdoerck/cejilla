@@ -9,74 +9,164 @@ by hand because it ships outside any host app).
 Scoped under .inlay-song so it can't leak into the rest of the vault's UI.
 */
 
+/* Warm paper/wood palette — the same one the app icon uses (ebony board,
+   brass frets, ivory inlay), extended to a matching warm-paper palette
+   for light mode. Defined as variables scoped to .inlay-song so they only
+   ever affect rendered songs, never the rest of the vault. Both modes
+   override Obsidian's stock colors (near-black/near-white with a purple
+   accent) rather than deferring to them. */
 .inlay-song {
-  font-family: var(--font-text, Georgia, serif);
-  color: var(--text-normal);
+  --inlay-chord: var(--text-accent, #c0392b);
+}
+
+.theme-dark .inlay-song {
+  --inlay-bg: #241a12;
+  --inlay-bg-raised: #30241a;
+  --inlay-text: #e8dcc5;
+  --inlay-text-muted: #b8a888;
+  --inlay-border: #4a3a28;
+  --inlay-chord: #c9a15a;
+}
+
+.theme-light .inlay-song {
+  --inlay-bg: #fbf9f4;
+  --inlay-bg-raised: #f3eee1;
+  --inlay-text: #2b2419;
+  --inlay-text-muted: #6b5d47;
+  --inlay-border: #e5dcc5;
+  --inlay-chord: #93601f;
+}
+
+.inlay-song {
+  /* Explicit serif, not deferred to --font-text — that variable almost
+     always resolves to whatever sans-serif the active Obsidian theme
+     uses, so the old Georgia fallback here never actually applied.
+     Classic songbook typography pairs serif lyric text with bold
+     monospace chord symbols above it for a clear "what to sing" vs
+     "what to play" split — this makes that pairing real. */
+  font-family: Georgia, 'Iowan Old Style', Palatino, 'Palatino Linotype', 'Book Antiqua', serif;
+  color: var(--inlay-text, var(--text-normal));
+  /* Establishes the query container the @container rule below (on
+     .song-body) needs. Without this, that rule has no ancestor to measure
+     against and never fires — the layout was stuck single-column
+     regardless of actual pane width until this was added. */
+  container-type: inline-size;
+}
+
+.theme-dark .inlay-song,
+.theme-light .inlay-song {
+  background: var(--inlay-bg);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: -1rem -1.25rem; /* offset the padding so surrounding layout is unchanged */
+}
+
+/* Reset browser UA default margins on the elements render.ts creates
+   (h1/p/ul all carry their own default margin-block otherwise) — every
+   spacing value from here down is one we set on purpose, not one left
+   over from the browser's stylesheet. */
+.inlay-song h1,
+.inlay-song p,
+.inlay-song ul,
+.inlay-song li {
+  margin: 0;
+  padding: 0;
+}
+
+/* Obsidian's own reading-pane padding sits above this, outside anything
+   .inlay-song controls. Scoped to notes that actually contain a rendered
+   song so it never touches ordinary notes. Class names here
+   (.markdown-preview-view / .markdown-reading-view) are Obsidian's
+   internal container classes, not guaranteed stable across versions —
+   if a future Obsidian update stops matching, this rule silently no-ops
+   rather than breaking anything, but worth a recheck after an update. */
+.markdown-preview-view:has(.inlay-song),
+.markdown-reading-view:has(.inlay-song) {
+  padding-top: 0.5rem;
 }
 
 /* ── Meta header ── */
 
 .inlay-song .song-meta {
-  margin-bottom: 1.5rem;
-  border-bottom: 2px solid var(--background-modifier-border);
-  padding-bottom: 1rem;
+  margin-bottom: 0.6rem;
+  border-bottom: 1px solid var(--inlay-border, var(--background-modifier-border));
+  padding-bottom: 0.4rem;
 }
 
 .inlay-song .song-title {
-  font-size: 1.6rem;
+  font-size: 1.25rem;
   font-weight: bold;
+  letter-spacing: 0.01em;
 }
 
 .inlay-song .song-artist {
-  font-size: 1rem;
-  color: var(--text-muted);
-  margin-top: 0.25rem;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--inlay-text-muted, var(--text-muted));
+  margin-top: 0.1rem;
 }
 
 .inlay-song .song-directives {
   list-style: none;
   display: flex;
   flex-wrap: wrap;
-  gap: 1.25rem;
-  margin-top: 0.5rem;
+  gap: 1rem;
+  margin-top: 0.3rem;
   padding: 0;
-  font-size: 0.85rem;
-  color: var(--text-muted);
+  font-size: 0.75rem;
+  color: var(--inlay-text-muted, var(--text-muted));
+}
+
+.inlay-song .song-source {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
 }
 
 /* ── Chord diagrams ── */
+/* Sized down from the SVG's native ~94x142 viewBox — the viewBox is kept
+   in render.ts so proportions stay correct, this just scales the box
+   down for onscreen density. Print output (the CLI's html.js) is
+   untouched, still full size. */
 
 .inlay-song .chord-diagrams {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.25rem;
-  margin-bottom: 1.5rem;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
 }
 
 .inlay-song .chord-diagram {
   text-align: center;
 }
 
+.inlay-song .chord-diagram svg {
+  width: 72px;
+  height: auto;
+}
+
 .inlay-song .chord-name {
   font-family: var(--font-monospace);
   font-weight: bold;
-  font-size: 0.9rem;
-  margin-bottom: 0.25rem;
+  font-size: 0.78rem;
+  margin-bottom: 0.1rem;
+  color: var(--inlay-chord);
 }
 
 .inlay-song .chord-diagram svg line,
 .inlay-song .chord-diagram svg rect,
 .inlay-song .chord-diagram svg circle {
-  stroke: var(--text-normal);
+  stroke: var(--inlay-text, var(--text-normal));
 }
 
 .inlay-song .chord-diagram svg circle[fill="#333"],
 .inlay-song .chord-diagram svg rect[fill="#333"] {
-  fill: var(--text-normal);
+  fill: var(--inlay-text, var(--text-normal));
 }
 
 .inlay-song .chord-diagram svg text {
-  fill: var(--text-muted);
+  fill: var(--inlay-text-muted, var(--text-muted));
 }
 
 .inlay-song .chord-unknown {
@@ -92,25 +182,125 @@ Scoped under .inlay-song so it can't leak into the rest of the vault's UI.
   columns: 1;
 }
 
-@container (min-width: 700px) {
+@container (min-width: 560px) {
   .inlay-song .song-body {
     columns: 2;
     column-gap: 2rem;
+    column-fill: balance;
   }
 }
 
 .inlay-song .song-section {
   margin-bottom: 1.1rem;
+  padding-top: 0.6rem;
   break-inside: avoid;
 }
 
-.inlay-song .section-label {
+/* A thin rule between sections — classic print-songbook signal that a new
+   chunk has started, readable at a glance mid-performance. Skipped on the
+   very first section in a column so there's no stray line sitting right
+   under the title/diagrams with nothing above it. */
+.inlay-song .song-section:not(:first-child) {
+  border-top: 1px solid var(--inlay-border, var(--background-modifier-border));
+}
+
+/* A section that opens with a {column_break} needs no divider: the column
+   change already separates it, and the rule would otherwise sit at the
+   bottom of the previous column with nothing under it. */
+.inlay-song .song-section.song-section--column-start {
+  border-top: none;
+  padding-top: 0;
+  /* The break belongs to the section itself, not to the marker inside it.
+     A forced break after a zero-height first child of a break-inside:avoid
+     section made the browser push the whole section to the next column and
+     then break again, landing the content in an off-screen third column. */
+  break-before: column;
+  -webkit-column-break-before: always;
+}
+
+.inlay-song .song-section--column-start > .column-break:first-child {
+  break-after: auto;
+  -webkit-column-break-after: auto;
+}
+
+/* No divider after a boxed part either: the box already marks the boundary. */
+.inlay-song .song-section--chorus + .song-section,
+.inlay-song .song-section--bridge + .song-section,
+.inlay-song .song-section--pre-chorus + .song-section,
+.inlay-song .song-section--post-chorus + .song-section,
+.inlay-song .song-section--intro + .song-section,
+.inlay-song .song-section--outro + .song-section,
+.inlay-song .song-section--interlude + .song-section {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* Chorus gets the strongest signal — it's the section you return to, and
+   the one most worth spotting without reading the label. Bridge gets a
+   lighter version of the same accent: still clearly "not a verse," but
+   not competing with chorus for attention. Verse and anything else stay
+   quiet on purpose — the common case shouldn't be decorated. */
+.inlay-song .song-section.song-section--chorus {
+  /* Same specificity as the divider rule above and declared after it, so the
+     "no top rule" below actually wins. */
+  background: var(--inlay-bg-raised, var(--background-secondary));
+  border-top: none;
+  border-left: 3px solid var(--inlay-chord);
+  border-radius: 0 6px 6px 0;
+  padding: 0.2rem 0.75rem; /* the left bar and tint already set it apart — no extra air */
+  margin-left: -0.75rem;
+}
+
+.inlay-song .song-section.song-section--bridge,
+.inlay-song .song-section.song-section--pre-chorus,
+.inlay-song .song-section.song-section--post-chorus,
+.inlay-song .song-section.song-section--intro,
+.inlay-song .song-section.song-section--outro,
+.inlay-song .song-section.song-section--interlude {
+  border-top: none;
+  border-left: 3px solid var(--inlay-chord);
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+  padding-left: 0.75rem;
+}
+
+/* The part's own left bar is enough — drop the label's inner bar (and its
+   indent) inside highlighted parts so the two lines don't double up. */
+.inlay-song .song-section.song-section--chorus .section-label,
+.inlay-song .song-section.song-section--bridge .section-label,
+.inlay-song .song-section.song-section--pre-chorus .section-label,
+.inlay-song .song-section.song-section--post-chorus .section-label,
+.inlay-song .song-section.song-section--intro .section-label,
+.inlay-song .song-section.song-section--outro .section-label,
+.inlay-song .song-section.song-section--interlude .section-label {
+  border-left: none;
+  padding-left: 0;
+}
+
+/* Forced break from a {column_break} directive in the source — honored
+   regardless of column-fill: balance above, so it lands exactly where
+   the songwriter put it instead of wherever auto-balance guesses. Only
+   does anything once .song-body is actually 2-column (container query
+   above); single-column has nothing to break into. */
+.inlay-song .column-break {
+  break-after: column;
+  -webkit-column-break-after: always; /* older WebKit, matters on iOS */
+}
+
+.inlay-song .song-section .section-label {
+  /* Obsidian styles every <h2> with its own top margin and line height. The
+     label is an h2, so zero those here (this selector is more specific than
+     the theme's) or a gap opens above it, especially inside a box. */
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1.3;
   font-size: 0.75rem;
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-faint);
-  border-left: 3px solid var(--background-modifier-border);
+  color: var(--inlay-text-muted, var(--text-faint));
+  border-left: 3px solid var(--inlay-border, var(--background-modifier-border));
   padding-left: 0.5rem;
   margin-bottom: 0.35rem;
 }
@@ -131,13 +321,32 @@ Scoped under .inlay-song so it can't leak into the rest of the vault's UI.
   padding-right: 0.4em;
 }
 
+/* A chord splitting a word (e.g. "tom-orrow") gets its hyphen from the
+   renderer, not from this gap — drop the gap here so it doesn't also read
+   as a space. */
+.inlay-song .segment--tight {
+  padding-right: 0;
+}
+
 .inlay-song .chord {
   font-family: var(--font-monospace);
   font-weight: bold;
-  color: var(--text-accent, #c0392b);
+  color: var(--inlay-chord);
   font-size: 0.75rem;
   min-height: 1.1em;
   white-space: pre;
+}
+
+.inlay-song .song-line--chords-only {
+  /* Chords with no lyrics under them: one tight row, no empty lyric line
+     reserved beneath. */
+  align-items: baseline;
+  gap: 0.9em;
+  margin: 0.15rem 0;
+}
+
+.inlay-song .song-line--chords-only .chord {
+  min-height: 0;
 }
 
 .inlay-song .chord--empty {
@@ -165,8 +374,8 @@ Scoped under .inlay-song so it can't leak into the rest of the vault's UI.
 .inlay-song .song-blockquote {
   margin: 0.25rem 0;
   padding: 0.4rem 0.75rem;
-  border-left: 3px solid var(--text-accent, #c0392b);
-  background: var(--background-secondary);
+  border-left: 3px solid var(--inlay-chord);
+  background: var(--inlay-bg-raised, var(--background-secondary));
   border-radius: 0 4px 4px 0;
 }
 
@@ -174,13 +383,32 @@ Scoped under .inlay-song so it can't leak into the rest of the vault's UI.
 
 .inlay-song .section-ref {
   display: inline-block;
-  margin: 0.35rem 0;
+  margin: 0.75rem 0 0.35rem;
   padding: 0.15rem 0.6rem;
   font-family: var(--font-monospace);
   font-size: 0.8rem;
   font-weight: bold;
-  color: var(--text-accent, #c0392b);
-  border: 1px solid var(--background-modifier-border);
+  color: var(--inlay-chord);
+  border: 1px solid var(--inlay-border, var(--background-modifier-border));
   border-radius: 3px;
-  background: var(--background-secondary);
+  background: var(--inlay-bg-raised, var(--background-secondary));
+}
+
+/* ── Tablature (fenced ``` blocks) ── */
+/* Monospace so the columns of dashes and fret numbers line up, and no
+   wrapping — a tab line broken across two rows is unreadable. */
+
+.inlay-song .song-tab {
+  font-family: var(--font-monospace);
+  font-size: 0.8rem;
+  line-height: 1.25;
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: pre;
+  overflow-x: auto;
+  margin: 0.3rem 0 0.5rem;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  break-inside: avoid;
 }

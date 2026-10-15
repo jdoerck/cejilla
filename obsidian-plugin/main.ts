@@ -32,11 +32,18 @@ export default class InlayChordsPlugin extends Plugin {
   // re-renders after being edited, rather than staying stuck on stale HTML.
   private renderedDocs = new Set<string>();
 
+  // sourcePath -> the root element of the last full render we inserted for
+  // that note. See the second NOTE below, in processSongNote.
+  private renderedRoots = new Map<string, HTMLElement>();
+
   async onload() {
     await this.loadSettings();
     this.addSettingTab(new InlaySettingTab(this.app, this));
 
-    this.registerEvent(this.app.workspace.on('layout-change', () => this.renderedDocs.clear()));
+    this.registerEvent(this.app.workspace.on('layout-change', () => {
+      this.renderedDocs.clear();
+      this.renderedRoots.clear();
+    }));
 
     this.registerMarkdownPostProcessor(async (el, ctx) => {
       await this.processSongNote(el, ctx);
@@ -74,15 +81,44 @@ export default class InlayChordsPlugin extends Plugin {
     }
     this.renderedDocs.add(ctx.docId);
 
+    // NOTE — confirmed live: on a long enough note, Obsidian's reading
+    // view fires more than one render pass, each with its OWN docId (its
+    // progressive/chunked rendering, not something this plugin controls).
+    // The docId check above only dedupes *within* one pass — it does
+    // nothing to stop a second pass from fully re-rendering the note
+    // again, which is what produced two stacked copies of the song.
+    //
+    // Fix: don't try to guess which pass is "the real one" ahead of time.
+    // Instead, track the DOM node our last full render inserted for this
+    // file, and if a newer pass comes in and that node is still attached,
+    // remove it first. Whichever pass finishes last wins; the stale one
+    // gets cleaned up reactively rather than prevented.
+    const stale = this.renderedRoots.get(ctx.sourcePath);
+    if (stale?.isConnected) stale.remove();
+
     const source = await this.app.vault.cachedRead(file);
     const song = parse(source);
     const rendered = renderSong(song, {
-      instrument: this.settings.instrument,
+      instrument: this.resolveInstrument(fm),
       diagrams: this.settings.diagrams,
     });
+    this.renderedRoots.set(ctx.sourcePath, rendered);
 
     el.empty();
     el.appendChild(rendered);
+  }
+
+  /**
+   * Per-song `instrument:` frontmatter wins over the global settings
+   * default — matches how `key`, `capo`, etc. already work per-file. The
+   * CLI ([../src/cli.js](../src/cli.js)) has the same gap (only reads
+   * `--instrument` as a flag, never from the song's own frontmatter) —
+   * not fixed there yet, fixed here first since it's what's in front of us.
+   */
+  private resolveInstrument(fm: Record<string, unknown> | undefined | null): 'guitar' | 'ukulele' {
+    const raw = fm?.instrument;
+    if (raw === 'guitar' || raw === 'ukulele') return raw;
+    return this.settings.instrument;
   }
 
   async loadSettings() {

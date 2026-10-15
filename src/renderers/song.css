@@ -27,6 +27,7 @@ body {
 
 .song-artist {
   font-size: 1.1rem;
+  font-style: italic;
   color: #555;
   margin-top: .25rem;
 }
@@ -38,6 +39,13 @@ body {
   margin-top: .5rem;
   font-size: .9rem;
   color: #666;
+}
+
+.song-source {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
 }
 
 /* ── Chord diagrams ── */
@@ -75,7 +83,92 @@ body {
 
 .song-section {
   margin-bottom: 1.25rem;
+  padding-top: .6rem;
   break-inside: avoid;
+}
+
+/* A thin rule between sections — classic print-songbook signal that a new
+   chunk has started. Skipped on the first section so nothing sits under
+   the title/diagrams with no section above it. */
+.song-section:not(:first-child) {
+  border-top: 1px solid #ddd;
+}
+
+/* A section that opens with a {column_break} needs no divider: the column
+   change already separates it. */
+.song-section.song-section--column-start {
+  border-top: none;
+  padding-top: 0;
+  /* The break belongs to the section itself, not to the marker inside it.
+     A forced break after a zero-height first child of a break-inside:avoid
+     section made the browser push the whole section to the next column and
+     then break again, landing the content in an off-screen third column. */
+  break-before: column;
+  -webkit-column-break-before: always;
+}
+
+.song-section--column-start > .column-break:first-child {
+  break-after: auto;
+  -webkit-column-break-after: auto;
+}
+
+/* Chorus gets the strongest signal — the section you return to, worth
+   spotting without reading the label. Bridge gets a lighter version of
+   the same accent. Verse and everything else stay quiet on purpose. */
+/* No divider after a boxed part: the box already marks the boundary. */
+.song-section--chorus + .song-section,
+.song-section--bridge + .song-section,
+.song-section--pre-chorus + .song-section,
+.song-section--post-chorus + .song-section,
+.song-section--intro + .song-section,
+.song-section--outro + .song-section,
+.song-section--interlude + .song-section {
+  border-top: none;
+  padding-top: 0;
+}
+
+.song-section.song-section--chorus {
+  background: #fdf5f5;
+  border-top: none;
+  border-left: 3px solid #c0392b;
+  border-radius: 0 6px 6px 0;
+  padding: .2rem .75rem;
+  margin-left: -.75rem;
+}
+
+.song-section.song-section--bridge,
+.song-section.song-section--pre-chorus,
+.song-section.song-section--post-chorus,
+.song-section.song-section--intro,
+.song-section.song-section--outro,
+.song-section.song-section--interlude {
+  border-top: none;
+  border-left: 3px solid #c0392b;
+  padding-top: .2rem;
+  padding-bottom: .2rem;
+  padding-left: .75rem;
+}
+
+/* The part's own left bar is enough — drop the label's inner bar (and its
+   indent) inside highlighted parts so the two lines don't double up. */
+.song-section.song-section--chorus .section-label,
+.song-section.song-section--bridge .section-label,
+.song-section.song-section--pre-chorus .section-label,
+.song-section.song-section--post-chorus .section-label,
+.song-section.song-section--intro .section-label,
+.song-section.song-section--outro .section-label,
+.song-section.song-section--interlude .section-label {
+  border-left: none;
+  padding-left: 0;
+}
+
+/* Forced break from a {column_break} directive in the source. Forced
+   breaks are honored regardless of column-fill: balance above — this is
+   what makes it land exactly where the songwriter put it, instead of
+   wherever the browser's auto-balance guesses. */
+.column-break {
+  break-after: column;
+  -webkit-column-break-after: always; /* older WebKit, matters for iOS webviews */
 }
 
 .section-label {
@@ -106,6 +199,13 @@ body {
   padding-right: 0.4em;
 }
 
+/* A chord splitting a word (e.g. "tom-orrow") gets its hyphen from the
+   renderer, not from this gap — drop the gap here so it doesn't also read
+   as a space. */
+.segment--tight {
+  padding-right: 0;
+}
+
 .chord {
   font-family: Menlo, Consolas, 'Lucida Console', monospace;
   font-weight: bold;
@@ -113,6 +213,16 @@ body {
   font-size: .75rem;
   min-height: 1.1em;
   white-space: pre;
+}
+
+.song-line--chords-only {
+  align-items: baseline;
+  gap: .9em;
+  margin: .15rem 0;
+}
+
+.song-line--chords-only .chord {
+  min-height: 0;
 }
 
 .chord--empty {
@@ -149,7 +259,7 @@ body {
 
 .section-ref {
   display: inline-block;
-  margin: .35rem 0;
+  margin: .75rem 0 .35rem;
   padding: .15rem .6rem;
   font-family: 'Courier New', monospace;
   font-size: .8rem;
@@ -158,6 +268,19 @@ body {
   border: 1px solid #e8c4c0;
   border-radius: 3px;
   background: #fdf5f5;
+}
+
+/* ── Tablature (fenced ``` blocks) ── */
+
+.song-tab {
+  font-family: Menlo, Consolas, 'Lucida Console', monospace;
+  font-size: .8rem;
+  line-height: 1.25;
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: pre;
+  overflow-x: auto;
+  margin: .3rem 0 .5rem;
+  break-inside: avoid;
 }
 
 /* ── Print ── */
@@ -186,8 +309,25 @@ body {
     column-gap: .3in;
   }
 
-  .song-section       { margin-bottom: .6rem; break-inside: avoid; }
+  .song-section       { margin-bottom: .6rem; padding-top: .3rem; break-inside: avoid; }
   .section-label      { font-size: .7rem; margin-bottom: .2rem; }
+
+  /* Print is already tight on room and ink — keep the border accents
+     (they cost nothing) but drop the chorus background tint and the
+     negative margin/radius that only make sense in a wider on-screen
+     pane. */
+  .song-section--chorus {
+    background: none;
+    border-radius: 0;
+    margin-left: 0;
+    padding: .3rem 0 .3rem .5rem;
+  }
+  .song-section--bridge,
+  .song-section--pre-chorus,
+  .song-section--post-chorus,
+  .song-section--intro,
+  .song-section--outro,
+  .song-section--interlude { padding-left: .5rem; }
 
   .song-line          { font-size: .8rem; margin-bottom: 0; }
   .song-line--lyrics-only { line-height: 1.35; }
@@ -195,6 +335,7 @@ body {
   .chord--empty       { min-height: 1em; }
   .lyric              { font-size: .8rem; }
 
+  .song-tab           { font-size: .7rem; margin: .15rem 0 .3rem; }
   .song-blank         { height: .2rem; }
   .song-blockquote    { padding: .2rem .5rem; margin: .1rem 0; }
   .section-ref        { margin: .15rem 0; padding: .1rem .4rem; }

@@ -1,5 +1,5 @@
 import { lookupChord, stringCount, stringNames } from '../chords/index.js';
-import { extractChords } from '../song.js';
+import { extractChords, isMidWordBreak, isChordsOnlyLine } from '../song.js';
 
 const FRETS_SHOWN = 4;
 
@@ -83,20 +83,32 @@ function renderMeta(meta) {
   if (meta.capo)   lines.push('Capo: fret ' + meta.capo);
   if (meta.tempo)  lines.push('Tempo: ' + meta.tempo + ' BPM');
   if (meta.time)   lines.push('Time: ' + meta.time);
+  if (meta.source && meta.source.length) lines.push('Source: ' + meta.source.join(', '));
   return lines.join('\n');
 }
 
 function renderLyricsContent(line) {
   const segs = line.segments;
+  if (isChordsOnlyLine(line)) {
+    return segs.filter(seg => seg.chord).map(seg => seg.chord).join('  ');
+  }
   let chordRow = '';
   let lyricRow = '';
-  for (const seg of segs) {
+  segs.forEach((seg, i) => {
+    const isLast = i === segs.length - 1;
+    const tight = !isLast && isMidWordBreak(seg, segs[i + 1]);
     const chord = seg.chord || '';
     const text  = seg.text;
-    const width = Math.max(chord.length, text.length) + (seg === segs[segs.length - 1] ? 0 : 1);
+    // Width is always chord/text + a 1-char margin, same as before this
+    // feature existed — that margin is what keeps adjacent chord NAMES
+    // from colliding when one is longer than its lyric fragment (e.g.
+    // "B/A" over a single trailing space). A tight join just changes what
+    // fills that reserved margin — a hyphen instead of a space — rather
+    // than changing how much space is reserved.
+    const width = Math.max(chord.length, text.length) + (isLast ? 0 : 1);
     chordRow += chord.padEnd(width);
-    lyricRow += text.padEnd(width);
-  }
+    lyricRow += (tight ? text + '-' : text).padEnd(width);
+  });
   chordRow = chordRow.trimEnd();
   lyricRow = lyricRow.trimEnd();
   if (chordRow.trim() === '') return lyricRow;
@@ -105,6 +117,8 @@ function renderLyricsContent(line) {
 
 function renderLine(line) {
   if (line.type === 'blank_line') return '';
+  if (line.type === 'tab_block') return line.lines.join('\n');
+  if (line.type === 'column_break') return ''; // no column concept on stdout
   if (line.type === 'comment_line') return '# ' + line.text;
   if (line.type === 'blockquote_line') {
     return renderLyricsContent(line).split('\n').map(l => '| ' + l).join('\n');

@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { lookupChord, stringCount, stringNames } from '../chords/index.js';
-import { extractChords } from '../song.js';
+import { extractChords, isMidWordBreak, isChordsOnlyLine, repeatRefName, sourceLabels } from '../song.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CSS = readFileSync(join(__dirname, 'song.css'), 'utf8');
@@ -19,7 +19,12 @@ function svgDiagram(chordName, instrument, customChords) {
   const nStrings = stringCount(instrument);
   const strNames = stringNames(instrument);
 
-  const svgW = SVG_MARGIN * 2 + (nStrings - 1) * SVG_STRING_GAP;
+  // Extra right-side room for the "Nfr" position label — without this the
+  // label starts past the SVG's own declared width and gets silently
+  // clipped by the browser's default overflow:hidden on <svg> (it was
+  // showing as "3f" instead of "3fr").
+  const FRET_LABEL_SPACE = 20;
+  const svgW = SVG_MARGIN * 2 + (nStrings - 1) * SVG_STRING_GAP + FRET_LABEL_SPACE;
   const svgH = SVG_MARGIN + SVG_NUT_HEIGHT + FRETS_SHOWN * SVG_FRET_GAP + SVG_MARGIN + 16;
 
   if (!def) {
@@ -73,7 +78,7 @@ function svgDiagram(chordName, instrument, customChords) {
 
   // baseFret label
   if (def.baseFret > 1) {
-    svg += `<text x="${x(nStrings-1) + 6}" y="${y(0) + 4}" font-size="11" font-family="monospace" fill="#555">${def.baseFret}fr</text>`;
+    svg += `<text x="${x(nStrings-1) + 6}" y="${y(0) + 4}" font-size="14" font-family="monospace" fill="#555">${def.baseFret}fr</text>`;
   }
 
   // String names at bottom
@@ -104,6 +109,10 @@ function renderMeta(meta) {
   if (meta.capo)  details.push(`Capo: fret ${meta.capo}`);
   if (meta.tempo) details.push(`Tempo: ${meta.tempo} BPM`);
   if (meta.time)  details.push(`Time: ${esc(meta.time)}`);
+  const links = sourceLabels(meta.source).map(l => l.url
+    ? `<a class="song-source" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.text)}</a>`
+    : esc(l.text));
+  if (links.length) details.push(`Source: ${links.join(', ')}`);
   if (details.length) {
     html += '<ul class="song-directives">' + details.map(d => `<li>${d}</li>`).join('') + '</ul>';
   }
@@ -112,21 +121,31 @@ function renderMeta(meta) {
 }
 
 function renderLyricsLine(line) {
+  if (line.type === 'tab_block')    return `<pre class="song-tab">${esc(line.lines.join('\n'))}</pre>`;
   if (line.type === 'blank_line')   return '<div class="song-blank"></div>';
+  if (line.type === 'column_break') return '<div class="column-break"></div>';
   if (line.type === 'comment_line') return `<div class="song-comment">${esc(line.text)}</div>`;
 
   const hasChords = line.segments.some(seg => seg.chord);
 
-  const segs = line.segments.map(seg => {
+  if (isChordsOnlyLine(line)) {
+    const chords = line.segments.filter(seg => seg.chord)
+      .map(seg => `<span class="chord">${esc(seg.chord)}</span>`).join('');
+    return `<div class="song-line song-line--chords-only">${chords}</div>`;
+  }
+
+  const segs = line.segments.map((seg, i) => {
+    const tight = isMidWordBreak(seg, line.segments[i + 1]);
     const chord = hasChords
       ? (seg.chord
           ? `<span class="chord">${esc(seg.chord)}</span>`
           : `<span class="chord chord--empty"></span>`)
       : '';
-    const text = seg.text
-      ? `<span class="lyric">${esc(seg.text)}</span>`
+    const displayText = tight ? seg.text + '-' : seg.text;
+    const text = displayText
+      ? `<span class="lyric">${esc(displayText)}</span>`
       : `<span class="lyric lyric--empty"> </span>`;
-    return `<span class="segment">${chord}${text}</span>`;
+    return `<span class="segment${tight ? ' segment--tight' : ''}">${chord}${text}</span>`;
   });
 
   return `<div class="song-line${hasChords ? '' : ' song-line--lyrics-only'}">${segs.join('')}</div>`;
@@ -149,31 +168,27 @@ function groupLines(lines) {
   return groups;
 }
 
-function isSectionRef(group, sectionLabels) {
-  if (group.lines.length !== 1) return false;
-  const { segments } = group.lines[0];
-  if (segments.length !== 1 || segments[0].chord) return false;
-  return sectionLabels.has(segments[0].text.trim());
-}
-
 const SECTION_LABELS = {
   chorus: 'Chorus', verse: 'Verse', bridge: 'Bridge',
   tab: 'Tab', grid: 'Grid',
 };
 
-function renderSection(section, sectionLabels) {
+function renderSection(section) {
   const label = section.label
     || (section.type !== 'default' ? SECTION_LABELS[section.type] || section.type : '');
 
-  let html = `<section class="song-section song-section--${esc(section.type)}">`;
+  // A section that opens with a {column_break} gets no divider rule — the
+  // column change already separates it, and the rule would otherwise draw
+  // at the bottom of the previous column with nothing under it.
+  const startsColumn = section.lines[0]?.type === 'column_break';
+  let html = `<section class="song-section song-section--${esc(section.type)}${startsColumn ? ' song-section--column-start' : ''}">`;
   if (label) html += `<h2 class="section-label">${esc(label)}</h2>`;
 
   for (const group of groupLines(section.lines)) {
     if (!group.isBlockquote) {
       html += renderLyricsLine(group.lines[0]);
-    } else if (isSectionRef(group, sectionLabels)) {
-      const refName = group.lines[0].segments[0].text.trim();
-      html += `<div class="section-ref">↻ ${esc(refName)}</div>`;
+    } else if (repeatRefName(group.lines)) {
+      html += `<div class="section-ref">↻ ${esc(repeatRefName(group.lines))}</div>`;
     } else {
       html += '<blockquote class="song-blockquote">';
       html += group.lines.map(renderLyricsLine).join('');
@@ -203,10 +218,8 @@ export function render(song, options = {}) {
     }
   }
 
-  const sectionLabels = new Set(song.sections.map(s => s.label).filter(Boolean));
-
   body += '<div class="song-body">';
-  body += song.sections.map(s => renderSection(s, sectionLabels)).join('\n');
+  body += song.sections.map(s => renderSection(s)).join('\n');
   body += '</div>';
 
   return `<!DOCTYPE html>

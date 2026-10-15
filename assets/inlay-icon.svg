@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <title>Inlay</title>
+  <defs>
+    <!-- Fretboard: warm rosewood, lit from top-left -->
+    <linearGradient id="board" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#6B3B24"/>
+      <stop offset="0.55" stop-color="#3A2016"/>
+      <stop offset="1" stop-color="#1D100B"/>
+    </linearGradient>
+    <!-- Nickel fret wire: rounded crown lit from the left -->
+    <linearGradient id="fret" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9A938A"/>
+      <stop offset="0.3" stop-color="#F6F3EE"/>
+      <stop offset="0.6" stop-color="#D2CCC3"/>
+      <stop offset="1" stop-color="#857E75"/>
+    </linearGradient>
+    <!-- Mother-of-pearl -->
+    <radialGradient id="pearl" cx="0.36" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.4" stop-color="#F6F1F7"/>
+      <stop offset="0.75" stop-color="#DDEAEE"/>
+      <stop offset="1" stop-color="#C6BFD6"/>
+    </radialGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0.25" stop-color="#FFC9DF" stop-opacity="0"/>
+      <stop offset="0.55" stop-color="#FFC9DF" stop-opacity="0.35"/>
+      <stop offset="0.75" stop-color="#B5E6EE" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#B5E6EE" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background (full bleed; the OS applies the corner mask) -->
+  <rect width="1024" height="1024" fill="url(#board)"/>
+
+  <!-- Strings, horizontal like a tab staff; they fade out at small sizes -->
+  <g stroke="#F3E6D8" stroke-linecap="butt">
+    <line x1="0" y1="172" x2="1024" y2="172" stroke-width="7"  opacity="0.30"/>
+    <line x1="0" y1="308" x2="1024" y2="308" stroke-width="8"  opacity="0.30"/>
+    <line x1="0" y1="444" x2="1024" y2="444" stroke-width="9"  opacity="0.30"/>
+    <line x1="0" y1="580" x2="1024" y2="580" stroke-width="10" opacity="0.30"/>
+    <line x1="0" y1="716" x2="1024" y2="716" stroke-width="11" opacity="0.30"/>
+    <line x1="0" y1="852" x2="1024" y2="852" stroke-width="12" opacity="0.30"/>
+  </g>
+
+  <!-- Fret wires, shadow cast to the lower right -->
+  <g>
+    <rect x="198" y="0" width="30" height="1024" fill="#000" opacity="0.3"/>
+    <rect x="160" y="0" width="60" height="1024" fill="url(#fret)"/>
+    <rect x="842" y="0" width="30" height="1024" fill="#000" opacity="0.3"/>
+    <rect x="804" y="0" width="60" height="1024" fill="url(#fret)"/>
+  </g>
+
+  <!-- The double-dot inlay -->
+  <g>
+    <circle cx="519" cy="270" r="118" fill="#000" opacity="0.28"/>
+    <circle cx="519" cy="770" r="118" fill="#000" opacity="0.28"/>
+    <circle cx="512" cy="262" r="118" fill="url(#pearl)"/>
+    <circle cx="512" cy="762" r="118" fill="url(#pearl)"/>
+    <circle cx="512" cy="262" r="118" fill="url(#sheen)"/>
+    <circle cx="512" cy="762" r="118" fill="url(#sheen)"/>
+  </g>
+</svg>
