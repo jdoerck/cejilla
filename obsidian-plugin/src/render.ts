@@ -72,7 +72,7 @@ function chordDiagram(chordName: string, instrument: string, customChords: Map<s
     const strokeW = f === 0 && def.baseFret === 1 ? SVG_NUT_HEIGHT : 1;
     svg.appendChild(svgEl('line', {
       x1: x(0), y1: y(f), x2: x(nStrings - 1), y2: y(f),
-      stroke: '#333', 'stroke-width': strokeW,
+      stroke: 'currentColor', 'stroke-width': strokeW,
     }));
   }
 
@@ -80,7 +80,7 @@ function chordDiagram(chordName: string, instrument: string, customChords: Map<s
   for (let s = 0; s < nStrings; s++) {
     svg.appendChild(svgEl('line', {
       x1: x(s), y1: y(0), x2: x(s), y2: y(FRETS_SHOWN),
-      stroke: '#333', 'stroke-width': 1.5,
+      stroke: 'currentColor', 'stroke-width': 1.5,
     }));
   }
 
@@ -90,7 +90,7 @@ function chordDiagram(chordName: string, instrument: string, customChords: Map<s
     svg.appendChild(svgEl('rect', {
       x: x(def.barre.from), y: barreY - SVG_DOT_R,
       width: (def.barre.to - def.barre.from) * SVG_STRING_GAP, height: SVG_DOT_R * 2,
-      rx: SVG_DOT_R, fill: '#333',
+      rx: SVG_DOT_R, fill: 'currentColor', stroke: 'currentColor',
     }));
   }
 
@@ -100,7 +100,7 @@ function chordDiagram(chordName: string, instrument: string, customChords: Map<s
     if (fret <= 0) continue;
     if (def.barre && fret === def.barre.fret && s >= def.barre.from && s <= def.barre.to) continue;
     svg.appendChild(svgEl('circle', {
-      cx: x(s), cy: y(fret - def.baseFret + 1) - SVG_FRET_GAP / 2, r: SVG_DOT_R, fill: '#333',
+      cx: x(s), cy: y(fret - def.baseFret + 1) - SVG_FRET_GAP / 2, r: SVG_DOT_R, fill: 'currentColor', stroke: 'currentColor',
     }));
   }
 
@@ -111,13 +111,13 @@ function chordDiagram(chordName: string, instrument: string, customChords: Map<s
     const topY = SVG_MARGIN - 4;
     if (fret === -1) {
       const t = svgEl('text', {
-        x: cx, y: topY, 'text-anchor': 'middle', 'font-size': 12, 'font-family': 'monospace', fill: '#333',
+        x: cx, y: topY, 'text-anchor': 'middle', 'font-size': 12, 'font-family': 'monospace', class: 'dg-label', fill: 'currentColor',
       });
       t.textContent = 'x';
       svg.appendChild(t);
     } else if (fret === 0) {
       svg.appendChild(svgEl('circle', {
-        cx, cy: topY - 4, r: 4, fill: 'none', stroke: '#333', 'stroke-width': 1.5,
+        cx, cy: topY - 4, r: 4, fill: 'none', stroke: 'currentColor', 'stroke-width': 1.5,
       }));
     }
   }
@@ -125,7 +125,7 @@ function chordDiagram(chordName: string, instrument: string, customChords: Map<s
   // baseFret label
   if (def.baseFret > 1) {
     const t = svgEl('text', {
-      x: x(nStrings - 1) + 6, y: y(0) + 4, 'font-size': 14, 'font-family': 'monospace', fill: '#555',
+      x: x(nStrings - 1) + 6, y: y(0) + 4, 'font-size': 14, 'font-family': 'monospace', class: 'dg-label', fill: 'currentColor',
     });
     t.textContent = `${def.baseFret}fr`;
     svg.appendChild(t);
@@ -134,7 +134,7 @@ function chordDiagram(chordName: string, instrument: string, customChords: Map<s
   // String names at bottom
   for (let s = 0; s < nStrings; s++) {
     const t = svgEl('text', {
-      x: x(s), y: y(FRETS_SHOWN) + 14, 'text-anchor': 'middle', 'font-size': 10, 'font-family': 'monospace', fill: '#555',
+      x: x(s), y: y(FRETS_SHOWN) + 14, 'text-anchor': 'middle', 'font-size': 10, 'font-family': 'monospace', class: 'dg-label', fill: 'currentColor',
     });
     t.textContent = strNames[s];
     svg.appendChild(t);

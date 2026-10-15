@@ -1,4 +1,4 @@
-# Inlay Chords — Obsidian plugin
+# Cejilla — Obsidian plugin
 
 Scaffold. Untested on-device. See [docs/app-plan.md](../docs/app-plan.md) section 0
 for the plan this implements, including what's still unverified.

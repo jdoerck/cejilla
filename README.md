@@ -1,4 +1,4 @@
-# Inlay
+# Cejilla
 
 A Markdown-based musical tablature parser inspired by [ChordPro](https://github.com/ChordPro/chordpro). Write songs in plain `.md` files — compatible with [Obsidian](https://obsidian.md) vaults — and render them as printable chord sheets with diagrams for guitar or ukulele.
 

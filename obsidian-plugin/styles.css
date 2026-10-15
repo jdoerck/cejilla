@@ -154,18 +154,12 @@ Scoped under .inlay-song so it can't leak into the rest of the vault's UI.
   color: var(--inlay-chord);
 }
 
-.inlay-song .chord-diagram svg line,
-.inlay-song .chord-diagram svg rect,
-.inlay-song .chord-diagram svg circle {
-  stroke: var(--inlay-text, var(--text-normal));
+.inlay-song .chord-diagram svg {
+  /* Diagram strokes and fills are currentColor; theming is one variable. */
+  color: var(--inlay-text, var(--text-normal));
 }
 
-.inlay-song .chord-diagram svg circle[fill="#333"],
-.inlay-song .chord-diagram svg rect[fill="#333"] {
-  fill: var(--inlay-text, var(--text-normal));
-}
-
-.inlay-song .chord-diagram svg text {
+.inlay-song .chord-diagram svg .dg-label {
   fill: var(--inlay-text-muted, var(--text-muted));
 }
 

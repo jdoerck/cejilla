@@ -1,9 +1,10 @@
 import { createSection } from './song.js';
 
-// Section types that render as a highlighted part — the chorus tint, or the
-// left-bar accent the others share with the bridge (see song.css/styles.css).
-// A headed one covers only the stanza directly under its heading.
-const BOXED_TYPES = new Set(['chorus', 'bridge', 'pre-chorus', 'post-chorus', 'intro', 'outro', 'interlude']);
+// Section types that stand apart from the verses around them. A headed one
+// covers only the stanza directly under its heading. How these look is the
+// renderers' business (see song.css / styles.css); the parser only needs to
+// know where they end.
+const STANZA_SCOPED_TYPES = new Set(['chorus', 'bridge', 'pre-chorus', 'post-chorus', 'intro', 'outro', 'interlude']);
 
 const CHORD_RE = /\[([^\]]+)\]([^\[]*)/g;
 
@@ -237,14 +238,13 @@ export function parse(source) {
     if (line.trim() === '') {
       // Extra blank lines after a section that already ended at one.
       if (!currentSection) continue;
-      // A headed chorus/bridge/intro/etc. — the types that render as a
-      // highlighted part — covers only the stanza directly under its heading. The first
-      // blank line after real content ends it, so an unheaded verse that
-      // follows starts as a plain part instead of being boxed with the
-      // chorus. That blank line is only the separator, so it is not kept
-      // inside the box as trailing space. (Anything not boxed keeps all its
+      // A headed chorus/bridge/intro/etc. covers only the stanza directly
+      // under its heading. The first blank line after real content ends it,
+      // so an unheaded verse that follows starts as a plain part instead of
+      // being folded into the chorus. That blank line is only the separator,
+      // so it is not kept as trailing space. (Other types keep all their
       // stanzas in one section.)
-      if (BOXED_TYPES.has(currentSection.type) && currentSection.label
+      if (STANZA_SCOPED_TYPES.has(currentSection.type) && currentSection.label
           && currentSection.lines.some(l => l.type === 'lyrics_line' || l.type === 'blockquote_line' || l.type === 'tab_block')) {
         closeSection();
         continue;

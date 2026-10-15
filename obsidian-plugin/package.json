@@ -1,5 +1,5 @@
 {
-  "name": "inlay-chords",
+  "name": "cejilla",
   "version": "0.1.0",
   "description": "Obsidian plugin: renders inline-bracket ChordPro song notes as chord-over-lyric charts with diagrams.",
   "main": "main.js",
