@@ -1,6 +1,6 @@
 import { App, MarkdownPostProcessorContext, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 // @ts-ignore — plain JS core module, copied verbatim from src/parser.js, no I/O
-import { parse } from './src/core/parser.js';
+import { parse } from '../src/parser.js';
 import { renderSong } from './src/render';
 
 interface InlaySettings {

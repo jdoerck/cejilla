@@ -25,20 +25,15 @@ obsidian-plugin/
     render.ts           parsed song -> DOM (ported from ../src/renderers/html.js,
                          rebuilt with createElement/createElementNS instead of
                          string concatenation — see file header comment for why)
-    core/                copied VERBATIM from ../src — pure JS, no Node I/O,
-                          so no port was needed, just a copy
-      parser.js
-      song.js
-      chords/
-        index.js
-        guitar.js
-        ukulele.js
 ```
 
-`core/*.js` are copies, not symlinks or a shared package — see the repo-level
-[docs/app-plan.md](../docs/app-plan.md) ("multiple repos" discussion) for why
-that's the current call. If `../src/parser.js` changes, re-copy it here by
-hand until/unless this graduates to a real shared package.
+The parser, song helpers and chord tables are not copied here: `main.ts` and
+`src/render.ts` import them straight from `../src` (pure JS, no Node I/O), and
+esbuild bundles them into `main.js`. One source of truth, so a parser fix lands
+in the CLI and the plugin together. If the plugin ever moves to its own repo
+(the community-plugin registry wants a standalone one), that import becomes a
+vendored copy or a shared package again — see
+[docs/app-plan.md](../docs/app-plan.md).
 
 ## Build
 

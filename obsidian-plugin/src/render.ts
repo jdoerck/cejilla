@@ -9,9 +9,9 @@
 // file needs the matching change.
 
 // @ts-ignore — plain JS core modules, copied verbatim from src/, no I/O
-import { lookupChord, stringCount, stringNames } from './core/chords/index.js';
+import { lookupChord, stringCount, stringNames } from '../../src/chords/index.js';
 // @ts-ignore
-import { extractChords, isMidWordBreak, isChordsOnlyLine, repeatRefName, sourceLabels } from './core/song.js';
+import { extractChords, isMidWordBreak, isChordsOnlyLine, repeatRefName, sourceLabels } from '../../src/song.js';
 
 export interface RenderOptions {
   instrument?: 'guitar' | 'ukulele';
